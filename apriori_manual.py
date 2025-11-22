@@ -1,8 +1,7 @@
 import pandas as pd
 import itertools
 
-# --- FUNGSI BANTUAN (SESUAI GAMBAR) ---
-
+# --- ALGORITMA APRIORI MANUAL ---
 # Langkah 1 & 3: Menghitung Nilai Support
 # Rumus: Support(A) = Count(A) / N
 def calculate_support(itemset, transactions):
@@ -108,11 +107,11 @@ def generate_rules(frequent_itemsets, min_confidence, transactions_len):
                     support_a = frequent_itemsets[antecedent]
                     support_b = frequent_itemsets[consequent]
                     
-                    # Rumus Confidence (Sesuai Gambar)
+                    # Rumus Confidence
                     # Conf(A->B) = Support(A,B) / Support(A)
                     confidence = support_ab / support_a
                     
-                    # Rumus Lift (Sesuai Gambar)
+                    # Rumus Lift 
                     # Lift(A->B) = Support(A,B) / (Support(A) * Support(B))
                     lift = support_ab / (support_a * support_b)
                     
