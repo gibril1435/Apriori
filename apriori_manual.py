@@ -4,7 +4,7 @@ import itertools
 # --- FUNGSI BANTUAN (SESUAI GAMBAR) ---
 
 # Langkah 1 & 3: Menghitung Nilai Support
-# Rumus Gambar: Support(A) = Count(A) / N
+# Rumus: Support(A) = Count(A) / N
 def calculate_support(itemset, transactions):
     count = 0
     for transaction in transactions:
@@ -14,7 +14,7 @@ def calculate_support(itemset, transactions):
     return count / N
 
 # Langkah 2: Membentuk Kandidat Itemset (Ck)
-# Rumus Gambar: C_k = F_k-1 JOIN F_k-1
+# Rumus: C_k = F_k-1 JOIN F_k-1
 def generate_candidates(prev_frequent_itemsets, k):
     candidates = set()
     # Menggabungkan itemset (Self-Join)
@@ -28,7 +28,6 @@ def generate_candidates(prev_frequent_itemsets, k):
     return list(candidates)
 
 # Langkah 4: Melakukan Pruning (Apriori Property)
-# Gambar: "Jika A tidak frequent, maka superset A dieliminasi"
 def pruning(candidates, prev_frequent_itemsets, k):
     pruned_candidates = []
     for candidate in candidates:
@@ -129,16 +128,14 @@ def generate_rules(frequent_itemsets, min_confidence, transactions_len):
 
 # --- EKSEKUSI PROGRAM ---
 
-# 1. Load Data (Contoh memotong 100 data agar cepat dipahami logikanya)
-# Ganti 100 dengan len(full_dataset) jika ingin semua data
+# 1. Load Data 
 full_dataset = pd.read_csv('Market_Basket_Optimisation.csv', header=None)
-subset_data = full_dataset.head(100) 
 
 print("Memproses Data...")
 transactions = []
-for i in range(0, len(subset_data)):
+for i in range(0, len(full_dataset)):
     # Bersihkan 'nan'
-    transactions.append([str(subset_data.values[i,j]) for j in range(0, 20) if str(subset_data.values[i,j]) != 'nan'])
+    transactions.append([str(full_dataset.values[i,j]) for j in range(0, 20) if str(full_dataset.values[i,j]) != 'nan'])
 
 # 2. Jalankan Apriori
 # Min Support 5% (0.05), Min Confidence 20% (0.2)
