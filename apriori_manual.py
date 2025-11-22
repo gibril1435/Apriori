@@ -13,7 +13,7 @@ def calculate_support(itemset, transactions):
     return count / N
 
 # Langkah 2: Membentuk Kandidat Itemset (Ck)
-# Rumus: C_k = F_k-1 JOIN F_k-1
+# Rumus: Ck = Fk-1 JOIN Fk-1
 def generate_candidates(prev_frequent_itemsets, k):
     candidates = set()
     # Menggabungkan itemset (Self-Join)
@@ -45,7 +45,6 @@ def pruning(candidates, prev_frequent_itemsets, k):
 # --- ALGORITMA UTAMA ---
 
 def apriori_manual(transactions, min_support):
-    # Data harus dalam bentuk list of sets untuk operasi matematika himpunan
     trans_sets = [set(t) for t in transactions]
     
     # 1. Mencari Frequent Itemset level-1 (C1 -> L1)
@@ -71,10 +70,8 @@ def apriori_manual(transactions, min_support):
     while len(current_l) > 0:
         # Langkah 2: Generate Candidate Ck
         candidates = generate_candidates(current_l, k)
-        
         # Langkah 4: Pruning
         candidates_pruned = pruning(candidates, level_frequent[-1], k)
-        
         # Langkah 3: Hitung Support Kandidat yang tersisa
         next_l = []
         for candidate in candidates_pruned:
@@ -128,24 +125,51 @@ def generate_rules(frequent_itemsets, min_confidence, transactions_len):
 # --- EKSEKUSI PROGRAM ---
 
 # 1. Load Data 
-full_dataset = pd.read_csv('Market_Basket_Optimisation.csv', header=None)
+try:
+    full_dataset = pd.read_csv('Market_Basket_Optimisation.csv', header=None)
+    print(f"Dataset dimuat: {full_dataset.shape[0]} transaksi, maksimal {full_dataset.shape[1]} item per transaksi.")
+except FileNotFoundError:
+    print("Error: File 'Market_Basket_Optimisation.csv' tidak ditemukan.")
+    exit()
 
-print("Memproses Data...")
+print("Sedang memproses data transaksi...")
 transactions = []
+# Menggunakan range kolom dinamis sesuai ukuran dataset
+num_columns = full_dataset.shape[1] 
+
 for i in range(0, len(full_dataset)):
-    # Bersihkan 'nan'
-    transactions.append([str(full_dataset.values[i,j]) for j in range(0, 20) if str(full_dataset.values[i,j]) != 'nan'])
+    transaction = []
+    for j in range(0, num_columns):
+        item = str(full_dataset.values[i, j])
+        # Filter 'nan' (Pandas NaN) dan 'None'
+        if item != 'nan' and item != 'None':
+            transaction.append(item)
+    transactions.append(transaction)
 
 # 2. Jalankan Apriori
-# Min Support 5% (0.05), Min Confidence 20% (0.2)
-freq_items = apriori_manual(transactions, min_support=0.05)
-rules_df = generate_rules(freq_items, min_confidence=0.2, transactions_len=len(transactions))
+# Support 5% (0.05) dan Confidence 20% (0.2)
+min_support = 0.05 
+min_confidence = 0.2
 
-# 3. Tampilkan Hasil
-print("\n=== Frequent Itemsets (Contoh) ===")
-for k, v in list(freq_items.items())[:5]:
-    print(f"Item: {list(k)}, Support: {v:.4f}")
+print(f"\nMenjalankan Apriori (Min Support: {min_support}, Min Confidence: {min_confidence})...")
+freq_items = apriori_manual(transactions, min_support=min_support)
 
-print("\n=== Association Rules (Sesuai Langkah 5) ===")
-# Urutkan berdasarkan Lift tertinggi
-print(rules_df.sort_values(by='Lift', ascending=False).head(10).to_string(index=False))
+# Cek jika freq_items kosong
+if not freq_items:
+    print(f"\n[!] Tidak ditemukan Frequent Itemset dengan support = {min_support}.")
+else:
+    rules_df = generate_rules(freq_items, min_confidence=min_confidence, transactions_len=len(transactions))
+
+    # 3. Tampilkan Hasil
+    print("\n====== Frequent Itemsets  (Top 5) ======")
+    # Mengurutkan itemset berdasarkan support tertinggi
+    sorted_items = sorted(freq_items.items(), key=lambda x: x[1], reverse=True)
+    for item, support in sorted_items[:5]:
+        print(f"Item: {list(item)}, Support: {support:.4f}")
+
+    print(f"\n=========== Association Rules  (Top 10 by Lift) ===========")
+    if not rules_df.empty:
+        # Tampilkan format yang lebih rapi
+        print(rules_df.sort_values(by='Lift', ascending=False).head(10).to_string(index=False))
+    else:
+        print("Tidak ada aturan asosiasi yang memenuhi minimum confidence.")
