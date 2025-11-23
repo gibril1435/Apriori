@@ -156,7 +156,7 @@ for i in range(0, len(full_dataset)):
     transactions.append(transaction)
 
 # 2. Jalankan Apriori
-# Support 5% (0.05) dan Confidence 20% (0.2)
+# Support 1% (0.01) dan Confidence 20% (0.2)
 min_support = 0.01 
 min_confidence = 0.2
 
