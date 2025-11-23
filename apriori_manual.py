@@ -21,7 +21,7 @@ def generate_candidates(prev_frequent_itemsets, k):
         for itemset2 in prev_frequent_itemsets:
             # Gabungkan dua itemset
             union_set = itemset1.union(itemset2)
-            # Kita hanya ingin kandidat dengan panjang k
+            # Kandidat dengan panjang k
             if len(union_set) == k:
                 candidates.add(union_set)
     return list(candidates)
@@ -65,7 +65,7 @@ def apriori_manual(transactions, min_support):
             frequent_itemsets[itemset] = supp
             
     level_frequent.append(set(current_l))
-    
+
     k = 2
     while len(current_l) > 0:
         # Langkah 2: Generate Candidate Ck
@@ -93,6 +93,7 @@ def apriori_manual(transactions, min_support):
 # Langkah 5: Menghasilkan Aturan Asosiasi (Confidence & Lift)
 def generate_rules(frequent_itemsets, min_confidence, transactions_len):
     rules = []
+    seen_unordered = set()  # untuk mencegah duplikat pasangan (A,B) dan (B,A)
     for itemset, support_ab in frequent_itemsets.items():
         if len(itemset) > 1:
             # Buat semua kemungkinan kombinasi (A -> B)
@@ -100,18 +101,25 @@ def generate_rules(frequent_itemsets, min_confidence, transactions_len):
                 for antecedent in itertools.combinations(itemset, i):
                     antecedent = frozenset(antecedent)
                     consequent = itemset.difference(antecedent)
-                    
+
+                    # Skip jika pasangan ini (tanpa arah) sudah diproses
+                    unordered_key = frozenset([antecedent, consequent])
+                    if unordered_key in seen_unordered:
+                        continue
+
+                    # Pastikan antecedent dan consequent ada di frequent_itemsets
+                    if antecedent not in frequent_itemsets or consequent not in frequent_itemsets:
+                        continue
+
                     support_a = frequent_itemsets[antecedent]
                     support_b = frequent_itemsets[consequent]
-                    
+
                     # Rumus Confidence
-                    # Conf(A->B) = Support(A,B) / Support(A)
                     confidence = support_ab / support_a
-                    
+
                     # Rumus Lift 
-                    # Lift(A->B) = Support(A,B) / (Support(A) * Support(B))
                     lift = support_ab / (support_a * support_b)
-                    
+
                     if confidence >= min_confidence:
                         rules.append({
                             'Antecedent': list(antecedent),
@@ -120,6 +128,8 @@ def generate_rules(frequent_itemsets, min_confidence, transactions_len):
                             'Confidence': round(confidence, 4),
                             'Lift': round(lift, 4)
                         })
+                        # Tandai pasangan ini (tanpa arah) sudah diproses
+                        seen_unordered.add(unordered_key)
     return pd.DataFrame(rules)
 
 # --- EKSEKUSI PROGRAM ---
@@ -134,7 +144,6 @@ except FileNotFoundError:
 
 print("Sedang memproses data transaksi...")
 transactions = []
-# Menggunakan range kolom dinamis sesuai ukuran dataset
 num_columns = full_dataset.shape[1] 
 
 for i in range(0, len(full_dataset)):
@@ -148,7 +157,7 @@ for i in range(0, len(full_dataset)):
 
 # 2. Jalankan Apriori
 # Support 5% (0.05) dan Confidence 20% (0.2)
-min_support = 0.05 
+min_support = 0.01 
 min_confidence = 0.2
 
 print(f"\nMenjalankan Apriori (Min Support: {min_support}, Min Confidence: {min_confidence})...")
